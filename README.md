@@ -1,71 +1,70 @@
 # DacHelpers
 
-Wrapper for Microsoft.SqlServer.Dac to simplify verifying and testing dacpacs.
+Wrapper for Microsoft.SqlServer.Dac to simplify verifying dacpacs and testing with them.
 
 ## Usage
 
-To deploy a dacpac simply supply a path, a connectionstring and a name:
+To deploy a dacpac to localhost or to local docker simply supply a path and a name:
 
 ```c#
 var dacpacPath = "TestDb.dacpac";
 var databaseName = "TestDb";
-var connectionString = "Data Source=(local); " +
-            "Integrated Security=true; " +
-            $"Initial Catalog=master};";
-DacHelper.Deploy(dacpacPath, connectionString, databaseName);
+string connectionstring;
+var disposableLocal = await DacHelper.DeployLocal(dacpacPath, databaseName, out connectionstring);
+//Or
+var disposableDocker = await DacHelper.DeployDocker(dacpacPath, databaseName, out connectionstring);
 ```
 
-To drop the existing database simply use DropAndDeploy instead:
+You get the connectionstring out for use in tests and also get a disposeable that you can use to clean up when finished testing. This allows the option to not dispose in order to be able to manually inspect the database after use. To clean up just dispose:
 
 ```c#
-DacHelper.DropAndDeploy(dacpacPath, connectionString, databaseName);
+disposableLocal.Dispose();
+//Or
+disposableDocker.Dispose();
 ```
 
-To simplify even further a docker container can be set up and the database deployed there or alternatively a database deployed to localhost:
+To drop the existing database before deployment simply use DropAndDeploy instead:
 
 ```c#
-var connectionString = DacHelper.DeployNewDocker(dacpacPath, databaseName);
-var connectionString = DacHelper.DropAndDeployLocal(dacpacPath, databaseName);
+var disposableLocal = await DacHelper.DropAndDeployLocal(dacpacPath, databaseName, out connectionstring);
+var disposableDocker = await DacHelper.DropAndDeployDocker(dacpacPath, databaseName, out connectionstring);
 ```
 
 If using sqlcmd variables in the dacpac you can supply a dictionary with mappings:
 
 ```c#
 var variableMap = new Dictionary<string, string>() { { "Registration", "Registration" } }
-var connectionString = DacHelper.DeployNewDocker(dacpacPath, databaseName, variableMap);
+var disposableDocker = DacHelper.DeployDocker(dacpacPath, databaseName, out connectionstring, variableMap);
 ```
 
-To let you inspect databases after use they are not dropped by default. You can drop the database manually if you want to clean up after use:
+To check drift or changes from a dacpac vs an actual database supply a connectionstring:
 
 ```c#
-DacHelper.DropDatabase(connectionString, databaseName);
+var connectionString = "Data Source=(local); " +
+            "Integrated Security=true; " +
+            $"Initial Catalog=master};";
+var changes = DacHelper.Compare(dacpacPath, databaseName, readOnlyConnectionString);
 ```
 
-To check drift:
-
-```c#
-var changes = DacHelper.Compare(dacpacPath, readOnlyConnectionString, databaseName);
-```
-
-To deploy a list of changescripts:
+To deploy a list of changescripts locally:
 
 ```c#
 var folder = "changescripts/"
 var changescripts = new List<string> = { $"{folder}001-addSchemas.sql", $"{folder}002-addEmployeeTable", $"{folder}003-addOfficeTable" }
-DacHelper.DeployChangescripts(changescripts, connectionString, databaseName);
+DacHelper.DeployChangescriptsLocal(databaseName, changescripts);
 ```
 
-Or simply to deploy a folder of changescripts (in alphabetical order):
+Or simply to deploy a folder of changescripts locally (in alphabetical order):
 
 ```c#
 var folder = "changescripts/"
-DacHelper.DeployChangescripts(folder, connectionString, databaseName);
+DacHelper.DeployChangescriptsLocal(databaseName, folder);
 ```
 
 Testing that changescripts match dacpac is then as simple as:
 
 ```c#
-DacHelper.DeployChangescripts(folder, connectionString, databaseName);
-var changes = DacHelper.Compare(dacpacPath, readOnlyConnectionString, databaseName);
+DacHelper.DeployChangescriptsLocal(databaseName, folder);
+var changes = DacHelper.CompareLocal(dacpacPath, databaseName);
 Assert.That(changes, Has.Count.EqualTo(0));
 ```

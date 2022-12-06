@@ -4,7 +4,29 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Here some nuget info. Remember to up version for new packages -->
+    <Title>DacHelpers</Title>
+    <Authors>asbjornb</Authors>
+    <PackageProjectUrl>https://github.com/asbjornb/DacHelpers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/asbjornb/DacHelpers</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>A small library to ease deployment and use of dacpackages in integration testing against databases.</Description>
+    <PackageTags>Sql; SqlServer; Database; DacFx; DacPac; Testing; IntegrationTesting; Deployment;</PackageTags>
+    <Version>0.0.1-alpha1</Version>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.1" />

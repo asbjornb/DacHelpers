@@ -2,12 +2,12 @@
 
 namespace DacHelpers.Helper;
 
-public abstract class TestDatabaseHelper
+public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
 {
     public string ConnectionString { get; }
     public string DatabaseName { get; }
 
-    protected TestDatabaseHelper(string connectionString, string databaseName)
+    protected AbstractTestDatabaseHelper(string connectionString, string databaseName)
     {
         ConnectionString = connectionString;
         DatabaseName = databaseName;
@@ -27,7 +27,6 @@ public abstract class TestDatabaseHelper
                                         "EXEC sp_MSforeachtable 'ALTER TABLE ? ENABLE TRIGGER ALL';" +
                                         "DBCC CHECKIDENT('{DatabaseName}', RESEED, 0);";
 
-        // Use a SqlConnection and SqlCommand to execute the query.
         using var connection = new SqlConnection(ConnectionString);
         connection.Open();
         var command = connection.CreateCommand();
@@ -38,7 +37,6 @@ public abstract class TestDatabaseHelper
     /// <summary>
     /// Clean up after this database. For localhost just drop the database. For docker dispose of the container as well.
     /// </summary>
-    /// <returns></returns>
     public abstract Task CleanUpAsync();
 
     /// <summary>
@@ -52,6 +50,7 @@ public abstract class TestDatabaseHelper
                              $"ALTER DATABASE {DatabaseName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" +
                              $"DROP DATABASE {DatabaseName}" +
                               "END";
+        
         using var connection = new SqlConnection(ConnectionString);
         connection.Open();
         var command = connection.CreateCommand();

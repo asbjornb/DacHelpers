@@ -44,13 +44,8 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
     /// </summary>
     protected virtual async Task DropDatabaseAsync()
     {
-        var dropDatabaseSql = "USE master;" +
-                             $"IF EXISTS (SELECT * FROM sys.databases WHERE name = '{DatabaseName}')" +
-                              "BEGIN" +
-                             $"ALTER DATABASE {DatabaseName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" +
-                             $"DROP DATABASE {DatabaseName}" +
-                              "END";
-        
+        var dropDatabaseSql = SqlQueryStrings.DropDatabaseSql(DatabaseName);
+
         using var connection = new SqlConnection(ConnectionString);
         connection.Open();
         var command = connection.CreateCommand();

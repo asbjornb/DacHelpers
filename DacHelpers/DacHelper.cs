@@ -1,5 +1,4 @@
 ﻿using DacHelpers.Helper;
-using Microsoft.Build.Utilities;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 
@@ -12,9 +11,9 @@ public static class DacHelper
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
-    public static async Task<ITestDatabaseHelper> DropAndDeployLocal(string dacpacPath, string databaseName)
+    public static async Task<ITestDatabaseHelper> DropAndDeployLocalAsync(string dacpacPath, string databaseName)
     {
-        return await DropAndDeployLocal(dacpacPath, databaseName, new Dictionary<string, string>());
+        return await DropAndDeployLocalAsync(dacpacPath, databaseName, new Dictionary<string, string>());
     }
 
     /// <summary>
@@ -23,10 +22,10 @@ public static class DacHelper
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
-    public static async Task<ITestDatabaseHelper> DropAndDeployLocal(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
+    public static async Task<ITestDatabaseHelper> DropAndDeployLocalAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
     {
         var connectionString = GetConnectionStringLocal(databaseName);
-        await DropAndCreateDatabase(connectionString, databaseName);
+        await DropAndCreateDatabaseAsync(connectionString, databaseName);
 
         var dacOptions = new DacDeployOptions
         {
@@ -57,7 +56,7 @@ public static class DacHelper
         return new LocalTestDatabaseHelper(connectionString, databaseName);
     }
 
-    private static async System.Threading.Tasks.Task DropAndCreateDatabase(string connectionString, string databaseName)
+    private static async Task DropAndCreateDatabaseAsync(string connectionString, string databaseName)
     {
         using var connection = new SqlConnection(connectionString);
         connection.Open();

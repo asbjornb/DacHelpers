@@ -69,6 +69,6 @@ public static class DacHelper
 
     private static string GetConnectionStringLocal(string dbName)
     {
-        return $"Data Source=localhost;Initial Catalog={dbName};Integrated Security=SSPI;";
+        return $"Data Source=localhost;Initial Catalog={dbName};Encrypt=False;Integrated Security=SSPI;";
     }
 }

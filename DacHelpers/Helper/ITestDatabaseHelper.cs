@@ -1,6 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-
-namespace DacHelpers.Helper;
+﻿namespace DacHelpers.Helper;
 
 public interface ITestDatabaseHelper
 {

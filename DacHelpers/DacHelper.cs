@@ -24,8 +24,8 @@ public static class DacHelper
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
     public static async Task<ITestDatabaseHelper> DropAndDeployLocalAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
     {
-        var connectionString = GetConnectionStringLocal("master"); //Connect to master since database might not yet exist
-        await DropAndCreateDatabaseAsync(connectionString, databaseName);
+        var connectionStringMaster = GetConnectionStringLocal("master"); //Connect to master since database might not yet exist
+        await DropAndCreateDatabaseAsync(connectionStringMaster, databaseName);
 
         var dacOptions = new DacDeployOptions
         {
@@ -37,7 +37,7 @@ public static class DacHelper
             dacOptions.SqlCommandVariableValues.Add(keyValuePair);
         }
 
-        var dacServiceInstance = new DacServices(connectionString);
+        var dacServiceInstance = new DacServices(connectionStringMaster);
         //Could hook up here to dacServiceInstance.ProgressChanged and .Message to get progress updates but not sure where to log them
         try
         {
@@ -53,7 +53,7 @@ public static class DacHelper
             throw;
         }
 
-        return new LocalTestDatabaseHelper(connectionString, databaseName);
+        return new LocalTestDatabaseHelper(GetConnectionStringLocal(databaseName), databaseName);
     }
 
     private static async Task DropAndCreateDatabaseAsync(string connectionString, string databaseName)

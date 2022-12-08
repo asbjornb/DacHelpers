@@ -24,12 +24,12 @@ public static class DacHelper
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
     public static async Task<ITestDatabaseHelper> DropAndDeployLocalAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
     {
-        var connectionString = GetConnectionStringLocal(databaseName);
+        var connectionString = GetConnectionStringLocal("master"); //Connect to master since database might not yet exist
         await DropAndCreateDatabaseAsync(connectionString, databaseName);
 
         var dacOptions = new DacDeployOptions
         {
-            BlockOnPossibleDataLoss = false
+            BlockOnPossibleDataLoss = false //This is for tests
         };
 
         foreach (var keyValuePair in sqlCmdVariables)

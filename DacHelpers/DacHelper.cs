@@ -4,6 +4,9 @@ using Microsoft.SqlServer.Dac;
 
 namespace DacHelpers;
 
+/// <summary>
+/// Helper class for deploying dacpacs for use in tests
+/// </summary>
 public static class DacHelper
 {
     /// <summary>

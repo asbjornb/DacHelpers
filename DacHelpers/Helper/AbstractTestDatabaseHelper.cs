@@ -2,6 +2,9 @@
 
 namespace DacHelpers.Helper;
 
+/// <summary>
+/// Abstract base class for test database helpers. Can be used to extend the functionality of the project
+/// </summary>
 public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
 {
     public string ConnectionString { get; }

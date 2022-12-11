@@ -1,8 +1,18 @@
 ﻿namespace DacHelpers.Helper;
 
+/// <summary>
+/// Small helper class for working with a deployed test-database
+/// </summary>
 public interface ITestDatabaseHelper
 {
+    /// <summary>
+    /// Connection string to the database
+    /// </summary>
     public string ConnectionString { get; }
+    
+    /// <summary>
+    /// Name of the database
+    /// </summary>
     public string DatabaseName { get; }
 
     /// <summary>

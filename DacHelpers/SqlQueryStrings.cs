@@ -1,5 +1,8 @@
 ﻿namespace DacHelpers;
 
+/// <summary>
+/// Helper class to use some sql strings that are used in multiple places
+/// </summary>
 public static class SqlQueryStrings
 {
     public static string DropDatabaseSql(string databaseName)

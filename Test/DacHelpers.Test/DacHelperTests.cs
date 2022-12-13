@@ -4,7 +4,7 @@ using PetaPoco;
 namespace DacHelpers.Test;
 
 [TestFixture]
-public class LocalDatabaseTests
+public class DacHelperTests
 {
     private ITestDatabaseHelper? testDatabaseHelper;
     private ITestDatabaseHelper? testDatabaseHelper2;
@@ -12,7 +12,7 @@ public class LocalDatabaseTests
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        var dir = Path.GetDirectoryName(new Uri(typeof(LocalDatabaseTests).Assembly.Location).LocalPath);
+        var dir = Path.GetDirectoryName(new Uri(typeof(DacHelperTests).Assembly.Location).LocalPath);
         Directory.SetCurrentDirectory(dir!);
     }
 

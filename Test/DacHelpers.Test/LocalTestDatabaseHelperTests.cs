@@ -68,6 +68,26 @@ public class LocalTestDatabaseHelperTests
         Assert.That(result, Is.Empty);
     }
 
+    [Test]
+    public async Task ResetDatabaseAsync_ClearsTablesWithTrigger()
+    {
+        //Arrange by creating trigger that errors on delete
+        using var database = new Database(sut.ConnectionString, "Microsoft.Data.SqlClient");
+        await database.ExecuteAsync("CREATE TABLE [dbo].[TestTable] ([Id] int NOT NULL PRIMARY KEY, [Name] nvarchar(50) NOT NULL);");
+        await database.ExecuteAsync("CREATE TRIGGER [dbo].[TestTableTrigger] ON [dbo].[TestTable] AFTER DELETE AS BEGIN RAISERROR('Test error', 16, 1); END;");
+        await database.InsertAsync(new TestTablePoco(1, "SomeName"));
+        await database.InsertAsync(new TestTablePoco(2, "SomeOtherName"));
+        var result = await database.FetchAsync<TestTablePoco>();
+        Assert.That(result, Has.Count.EqualTo(2));
+
+        //Act
+        await sut.ResetDatabaseAsync();
+
+        //Assert
+        result = await database.FetchAsync<TestTablePoco>();
+        Assert.That(result, Is.Empty);
+    }
+
     //PetaPoco attributes for tablename and primary key
     [TableName("dbo.TestTable")]
     [PrimaryKey("Id", AutoIncrement=false)]

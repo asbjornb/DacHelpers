@@ -28,7 +28,7 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
 
     /// <summary>
     /// Reset all tables by disabling triggers and constraints, deleting and reenabling triggers and constraints.
-    /// More specific resetting like reseeding identities might require your own implementation.
+    /// More specific resetting like reseeding identities or clearing history for temporal tables requires your own implementation.
     /// Note also that this can be slow - so for simple tests consider just manually resetting with TRUNCATE TABLE.
     /// </summary>
     public virtual async Task ResetDatabaseAsync()

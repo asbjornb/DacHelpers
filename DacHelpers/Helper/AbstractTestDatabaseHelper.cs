@@ -27,20 +27,19 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
     }
 
     /// <summary>
-    /// Reset all tables by disabling triggers and constraints, deleting and reenabling triggers and constraints - then reseeding identities at 0.
-    /// More specific resetting might require your own implementation.
+    /// Reset all tables by disabling triggers and constraints, deleting and reenabling triggers and constraints.
+    /// More specific resetting like reseeding identities might require your own implementation.
     /// Note also that this can be slow - so for simple tests consider just manually resetting with TRUNCATE TABLE.
     /// </summary>
     public virtual async Task ResetDatabaseAsync()
     {
         //Using the undocumented sp_MSforeachtable with parameter @whereand
-        const string whereClause = "@@whereand='and o.Name NOT IN (SELECT t.name from sys.tables t where t.temporal_type = 1)'";
+        const string whereClause = "@whereand='and o.Name NOT IN (SELECT t.name from sys.tables t where t.temporal_type = 1)'";
         const string resetDatabaseSql = "EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';" +
                                         "EXEC sp_MSforeachtable 'ALTER TABLE ? DISABLE TRIGGER ALL';" +
-                                       $"EXEC sp_MSforeachtable 'SET QUOTED_IDENTIFIER ON; DELETE FROM ?' {whereClause};" +
+                                       $"EXEC sp_MSforeachtable 'SET QUOTED_IDENTIFIER ON; DELETE FROM ?', {whereClause};" +
                                         "EXEC sp_MSforeachtable 'ALTER TABLE ? CHECK CONSTRAINT ALL';" +
-                                        "EXEC sp_MSforeachtable 'ALTER TABLE ? ENABLE TRIGGER ALL';" +
-                                        "DBCC CHECKIDENT('{DatabaseName}', RESEED, 0);";
+                                        "EXEC sp_MSforeachtable 'ALTER TABLE ? ENABLE TRIGGER ALL';";
 
         using var connection = new SqlConnection(ConnectionString);
         connection.Open();

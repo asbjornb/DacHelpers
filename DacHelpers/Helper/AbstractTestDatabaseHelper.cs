@@ -9,11 +9,13 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
 {
     public string ConnectionString { get; }
     public string DatabaseName { get; }
+    protected string ConnectionStringMaster { get; }
 
     protected AbstractTestDatabaseHelper(string connectionString, string databaseName)
     {
         ConnectionString = connectionString;
         DatabaseName = databaseName;
+        ConnectionStringMaster = ConnectionString.Replace($"Initial Catalog={DatabaseName};", "Initial Catalog=master;");
     }
 
     /// <summary>
@@ -51,7 +53,7 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
     {
         var dropDatabaseSql = SqlQueryStrings.DropDatabaseSql(DatabaseName);
 
-        using var connection = new SqlConnection(ConnectionString);
+        using var connection = new SqlConnection(ConnectionStringMaster);
         connection.Open();
         var command = connection.CreateCommand();
         command.CommandText = dropDatabaseSql;

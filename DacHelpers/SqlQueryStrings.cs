@@ -5,6 +5,11 @@
 /// </summary>
 public static class SqlQueryStrings
 {
+    /// <summary>
+    /// SQL query (as a string) to drop a database if it exists. If unsure if it exists make sure to use connection string to master as connecting directly will fail.
+    /// </summary>
+    /// <param name="databaseName">Name of the database to drop</param>
+    /// <returns>Sql drop query as string</returns>
     public static string DropDatabaseSql(string databaseName)
     {
         return $"USE master;{Environment.NewLine}" +
@@ -15,6 +20,12 @@ public static class SqlQueryStrings
                $"END{Environment.NewLine}";
     }
 
+    /// <summary>
+    /// SQL query (as a string) to drop a database if it exists and then create a new database again with that new.
+    /// If unsure if it exists make sure to use connection string to master as connecting directly will fail.
+    /// </summary>
+    /// <param name="databaseName">Name of the database to drop</param>
+    /// <returns>Sql drop and create query as string</returns>
     public static string DropAndCreateDatabase(string databaseName)
     {
         return DropDatabaseSql(databaseName) + $"CREATE DATABASE {databaseName};{Environment.NewLine}";

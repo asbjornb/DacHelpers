@@ -7,10 +7,18 @@ namespace DacHelpers.Helper;
 /// </summary>
 public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
 {
+    ///<inheritdoc />
     public string ConnectionString { get; }
+    ///<inheritdoc />
     public string DatabaseName { get; }
+    ///<inheritdoc />
     protected string ConnectionStringMaster { get; }
 
+    /// <summary>
+    /// Base implementation of helper to work with test-databases
+    /// </summary>
+    /// <param name="connectionString">Connectionstring to the database</param>
+    /// <param name="databaseName">Name of the database</param>
     protected AbstractTestDatabaseHelper(string connectionString, string databaseName)
     {
         ConnectionString = connectionString;

@@ -47,8 +47,30 @@ public class LocalTestDatabaseHelperTests
         Assert.That(result, Is.Empty);
     }
 
+    [Test]
+    public async Task ResetDatabaseAsync_ClearsTablesWithForeignKeys()
+    {
+        //Arrange
+        using var database = new Database(sut.ConnectionString, "Microsoft.Data.SqlClient");
+        await database.ExecuteAsync("CREATE TABLE [dbo].[TestTable] ([Id] int NOT NULL PRIMARY KEY, [Name] nvarchar(50) NOT NULL);");
+        await database.ExecuteAsync("CREATE TABLE [dbo].[TestTable2] ([Id] int NOT NULL PRIMARY KEY, [Name] nvarchar(50) NOT NULL, [TestTableId] int NOT NULL FOREIGN KEY REFERENCES [dbo].[TestTable]([Id]));");
+        await database.InsertAsync(new TestTablePoco(1, "SomeName"));
+        await database.InsertAsync(new TestTablePoco(2, "SomeOtherName"));
+        await database.ExecuteAsync("INSERT INTO dbo.TestTable2([Id], [Name], [TestTableId]) VALUES (@0, @1, @2);", 1, "SomeName", 1);
+        await database.ExecuteAsync("INSERT INTO dbo.TestTable2([Id], [Name], [TestTableId]) VALUES (@0, @1, @2);", 2, "SomeName", 2);
+
+        //Act
+        await sut.ResetDatabaseAsync();
+
+        //Assert
+        var result = await database.FetchAsync<TestTablePoco>();
+        Assert.That(result, Is.Empty);
+        result = await database.FetchAsync<TestTablePoco>("SELECT [Id], [Name] FROM dbo.TestTable2");
+        Assert.That(result, Is.Empty);
+    }
+
     //PetaPoco attributes for tablename and primary key
-    [TableName("TestTable")]
+    [TableName("dbo.TestTable")]
     [PrimaryKey("Id", AutoIncrement=false)]
     private class TestTablePoco
     {

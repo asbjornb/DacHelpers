@@ -9,13 +9,6 @@ public class DacHelperTests
     private ITestDatabaseHelper? testDatabaseHelper;
     private ITestDatabaseHelper? testDatabaseHelper2;
 
-    [OneTimeSetUp]
-    public void OneTimeSetUp()
-    {
-        var dir = Path.GetDirectoryName(new Uri(typeof(DacHelperTests).Assembly.Location).LocalPath);
-        Directory.SetCurrentDirectory(dir!);
-    }
-
     [TearDown]
     public async Task TearDown()
     {

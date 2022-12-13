@@ -50,22 +50,21 @@ public class LocalTestDatabaseHelperTests
     [Test]
     public async Task ResetDatabaseAsync_ClearsTablesWithForeignKeys()
     {
-        //Arrange
+        //Arrange by setting up table that references itself across rows
         using var database = new Database(sut.ConnectionString, "Microsoft.Data.SqlClient");
-        await database.ExecuteAsync("CREATE TABLE [dbo].[TestTable] ([Id] int NOT NULL PRIMARY KEY, [Name] nvarchar(50) NOT NULL);");
-        await database.ExecuteAsync("CREATE TABLE [dbo].[TestTable2] ([Id] int NOT NULL PRIMARY KEY, [Name] nvarchar(50) NOT NULL, [TestTableId] int NOT NULL FOREIGN KEY REFERENCES [dbo].[TestTable]([Id]));");
-        await database.InsertAsync(new TestTablePoco(1, "SomeName"));
-        await database.InsertAsync(new TestTablePoco(2, "SomeOtherName"));
-        await database.ExecuteAsync("INSERT INTO dbo.TestTable2([Id], [Name], [TestTableId]) VALUES (@0, @1, @2);", 1, "SomeName", 1);
-        await database.ExecuteAsync("INSERT INTO dbo.TestTable2([Id], [Name], [TestTableId]) VALUES (@0, @1, @2);", 2, "SomeName", 2);
+        await database.ExecuteAsync("CREATE TABLE [dbo].[TestTable] ([Id] int NOT NULL PRIMARY KEY, [Name] nvarchar(50) NOT NULL, [TestTableId] int NOT NULL FOREIGN KEY REFERENCES [dbo].[TestTable]([Id]));");
+        await database.ExecuteAsync("ALTER TABLE [dbo].[TestTable] NOCHECK CONSTRAINT ALL;");
+        await database.ExecuteAsync("INSERT INTO dbo.TestTable([Id], [Name], [TestTableId]) VALUES (@0, @1, @2);", 1, "SomeName", 2);
+        await database.ExecuteAsync("INSERT INTO dbo.TestTable([Id], [Name], [TestTableId]) VALUES (@0, @1, @2);", 2, "SomeOtherName", 1);
+        await database.ExecuteAsync("ALTER TABLE [dbo].[TestTable] CHECK CONSTRAINT ALL;");
+        var result = await database.FetchAsync<TestTablePoco>();
+        Assert.That(result, Has.Count.EqualTo(2));
 
         //Act
         await sut.ResetDatabaseAsync();
 
         //Assert
-        var result = await database.FetchAsync<TestTablePoco>();
-        Assert.That(result, Is.Empty);
-        result = await database.FetchAsync<TestTablePoco>("SELECT [Id], [Name] FROM dbo.TestTable2");
+        result = await database.FetchAsync<TestTablePoco>();
         Assert.That(result, Is.Empty);
     }
 

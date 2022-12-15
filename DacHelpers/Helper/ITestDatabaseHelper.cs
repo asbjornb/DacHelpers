@@ -9,7 +9,7 @@ public interface ITestDatabaseHelper
     /// Connection string to the database
     /// </summary>
     public string ConnectionString { get; }
-    
+
     /// <summary>
     /// Name of the database
     /// </summary>
@@ -25,6 +25,5 @@ public interface ITestDatabaseHelper
     /// <summary>
     /// Clean up after this database. For localhost just drop the database. For docker dispose of the container as well.
     /// </summary>
-    /// <returns></returns>
     public Task CleanUpAsync();
 }

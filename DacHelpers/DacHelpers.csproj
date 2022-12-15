@@ -31,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Docker.DotNet" Version="3.125.12" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.1" />
     <PackageReference Include="Microsoft.SqlServer.DacFx" Version="161.6374.0" />
   </ItemGroup>

@@ -1,4 +1,5 @@
-﻿using DacHelpers.Helper;
+﻿using DacHelpers.DockerHelpers;
+using DacHelpers.Helper;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 
@@ -10,7 +11,7 @@ namespace DacHelpers;
 public static class DacHelper
 {
     /// <summary>
-    /// Deploys a DACPAC at the given path to localhost at the given database name
+    /// Deploys a DACPAC to localhost
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
@@ -20,7 +21,7 @@ public static class DacHelper
     }
 
     /// <summary>
-    /// Deploys a DACPAC at the given path to localhost at the given database name
+    /// Deploys a DACPAC to localhost
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
@@ -57,6 +58,65 @@ public static class DacHelper
         }
 
         return new LocalTestDatabaseHelper(GetConnectionStringLocal(databaseName), databaseName);
+    }
+
+    /// <summary>
+    /// Creates a local docker container and deploys a dacpac there. Port and adress are chosen to simplify everything
+    /// </summary>
+    /// <param name="dacpacPath">Path to the DACPAC</param>
+    /// <param name="databaseName">Name of the database to deploy to</param>
+    public static async Task<ITestDatabaseHelper> DropAndDeployDockerAsync(string dacpacPath, string databaseName)
+    {
+        return await DropAndDeployDockerAsync(dacpacPath, databaseName, new Dictionary<string, string>());
+    }
+
+    /// <summary>
+    /// Creates a local docker container and deploys a dacpac there. Port and adress are chosen to simplify everything
+    /// </summary>
+    /// <param name="dacpacPath">Path to the DACPAC</param>
+    /// <param name="databaseName">Name of the database to deploy to</param>
+    /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
+    public static async Task<ITestDatabaseHelper> DropAndDeployDockerAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
+    {
+        var dockerHandler = new SqlDockerHandler($"DacHelper{databaseName}");
+        var status = await dockerHandler.RunDockerSqlContainerAsync();
+
+        if (!status.IsSuccess)
+        {
+            throw new Exception($"Could not start docker container. Status: {status.Error}");
+        }
+
+        var connectionStringMaster = dockerHandler.ConnectionString("master");
+
+        await DropAndCreateDatabaseAsync(connectionStringMaster, databaseName);
+
+        var dacOptions = new DacDeployOptions
+        {
+            BlockOnPossibleDataLoss = false //This is for tests
+        };
+
+        foreach (var keyValuePair in sqlCmdVariables)
+        {
+            dacOptions.SqlCommandVariableValues.Add(keyValuePair);
+        }
+
+        var dacServiceInstance = new DacServices(connectionStringMaster);
+        //Could hook up here to dacServiceInstance.ProgressChanged and .Message to get progress updates but not sure where to log them
+        try
+        {
+            using DacPackage dacpac = DacPackage.Load(dacpacPath);
+            dacServiceInstance.Deploy(dacpac, databaseName
+                                    , upgradeExisting: true
+                                    , options: dacOptions
+                                    );
+        }
+        catch (Exception)
+        {
+            //How do we handle or log these?
+            throw;
+        }
+
+        return new DockerTestDatabaseHelper(dockerHandler.ConnectionString(databaseName), databaseName, dockerHandler.CleanUpContainerAsync);
     }
 
     private static async Task DropAndCreateDatabaseAsync(string connectionString, string databaseName)

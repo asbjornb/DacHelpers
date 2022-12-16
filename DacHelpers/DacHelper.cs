@@ -78,15 +78,14 @@ public static class DacHelper
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
     public static async Task<ITestDatabaseHelper> DropAndDeployDockerAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
     {
-        var dockerHandler = new SqlDockerHandler($"DacHelper{databaseName}");
-        var status = await dockerHandler.RunDockerSqlContainerAsync();
+        var (status, container) = await SqlDockerHandler.RunDockerSqlContainerAsync($"DacHelper{databaseName}");
 
-        if (!status.IsSuccess)
+        if (!status.IsSuccess || container == null)
         {
             throw new Exception($"Could not start docker container. Status: {status.Error}");
         }
 
-        var connectionStringMaster = dockerHandler.ConnectionString("master");
+        var connectionStringMaster = container.GetConnectionString("master");
 
         await DropAndCreateDatabaseAsync(connectionStringMaster, databaseName);
 
@@ -116,7 +115,7 @@ public static class DacHelper
             throw;
         }
 
-        return new DockerTestDatabaseHelper(dockerHandler.ConnectionString(databaseName), databaseName, dockerHandler.CleanUpContainerAsync);
+        return new DockerTestDatabaseHelper(container, databaseName);
     }
 
     private static async Task DropAndCreateDatabaseAsync(string connectionString, string databaseName)

@@ -7,46 +7,25 @@ using Microsoft.Data.SqlClient;
 
 namespace DacHelpers.DockerHelpers;
 
-internal class SqlDockerHandler
+internal static class SqlDockerHandler
 {
     private const string containerImage = "mcr.microsoft.com/mssql/server";
     private const string SqlPort = "1433";
 
-    private readonly IDockerClient dockerClient;
-    private readonly int hostPort;
-    private readonly string containerName;
+    private static string ConnectionString(string databaseName, int hostPort) => $"Data Source=localhost,{hostPort};Initial Catalog={databaseName};User Id=sa;Password=Pa$$word;";
 
-    private string? containerId;
-    private bool isInitialised;
-
-    public string ConnectionString(string databaseName) => $"Data Source=localhost,{hostPort};Initial Catalog={databaseName};User Id=sa;Password=Pa$$word;";
-
-    /// <summary>Helps manage a SqlDockerContainer</summary>
-    /// <param name="containerName">Name for the container, can be empty for random name</param>
-    /// <param name="hostPort">Port from the host mapped to 1433 on the container</param>
-    public SqlDockerHandler(string containerName, int hostPort)
+    public static async Task<(Status, DockerContainer?)> RunDockerSqlContainerAsync(string containername, string containerImageTag = "2019-latest")
     {
-        dockerClient = CreateDockerClient();
-        this.hostPort = hostPort;
-        this.containerName = containerName;
-        isInitialised = false;
-    }
-
-    /// <summary>Helps manage a SqlDockerContainer</summary>
-    /// <param name="containerName">Name for the container, can be empty for random name</param>
-    public SqlDockerHandler(string containerName)
-    {
-        dockerClient = CreateDockerClient();
-        hostPort = GetFirstFreePort();
-        this.containerName = containerName;
-        isInitialised = false;
+        var hostPort = GetFirstFreePort();
+        return await RunDockerSqlContainerAsync(containername, hostPort, containerImageTag);
     }
 
     /// <summary>Builds and runs a docker container. Defaults to use 2019-latest tag but can be targetted to a specific version</summary>
     /// <param name="containerImageTag">Tag used to select version of sql server</param>
     /// <returns>Returns bool specifying if it was successful</returns>
-    public async Task<Status> RunDockerSqlContainerAsync(string containerImageTag = "2019-latest")
+    public static async Task<(Status,DockerContainer?)> RunDockerSqlContainerAsync(string containerName, int hostPort, string containerImageTag = "2019-latest")
     {
+        var dockerClient = CreateDockerClient();
         var imageParameters = new ImagesCreateParameters()
         {
             FromImage = containerImage,
@@ -55,13 +34,7 @@ internal class SqlDockerHandler
 
         await dockerClient.Images.CreateImageAsync(imageParameters, new AuthConfig(), new Progress<JSONMessage>()).ConfigureAwait(false);
 
-        var createContainerParameters = new CreateContainerParameters()
-        {
-            Name = containerName,
-            Image = $"{containerImage}:{containerImageTag}",
-        };
-
-        ConfigPorts(createContainerParameters);
+        var createContainerParameters = ConfigPorts(containerName, containerImage, containerImageTag, hostPort);
 
         var containerResponse = await dockerClient.Containers.CreateContainerAsync(createContainerParameters).ConfigureAwait(false);
 
@@ -69,47 +42,38 @@ internal class SqlDockerHandler
 
         if (!started)
         {
-            return Status.Faillure("Failed to start container");
+            dockerClient.Dispose();
+            return (Status.Faillure("Failed to start container"), null);
         }
 
-        var ready = await WaitTillReady(containerResponse.ID);
+        var ready = await WaitTillReady(dockerClient, containerResponse.ID, ConnectionString("master", hostPort));
 
         if (!ready.IsSuccess)
         {
-            return Status.Faillure("Failed to connect to SQL-database in container");
+            dockerClient.Dispose();
+            return (Status.Faillure("Failed to connect to SQL-database in container"), null);
         }
 
-        containerId = containerResponse.ID;
-        isInitialised = true;
-        return Status.Success();
+        var dockerContainer = new DockerContainer(dockerClient, containerResponse.ID, (databaseName) => ConnectionString(databaseName, hostPort));
+        return (Status.Success(), dockerContainer);
     }
 
-    public async Task DisposeAsync()
+    private static CreateContainerParameters ConfigPorts(string containerName, string containerImage, string containerImageTag, int hostPort)
     {
-        if (isInitialised)
+        var createContainerParameters = new CreateContainerParameters()
         {
-            await CleanUpContainerAsync();
-        }
-        dockerClient?.Dispose();
-    }
-
-    public async Task CleanUpContainerAsync()
-    {
-        await dockerClient.Containers.StopContainerAsync(containerId, new ContainerStopParameters() { WaitBeforeKillSeconds = 2 }).ConfigureAwait(false);
-        await dockerClient.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters() { Force = true }).ConfigureAwait(false);
-        isInitialised = false;
-    }
-
-    private void ConfigPorts(CreateContainerParameters createContainerParameters)
-    {
+            Name = containerName,
+            Image = $"{containerImage}:{containerImageTag}",
+        };
         //Map ports
-        createContainerParameters.ExposedPorts = new Dictionary<string, EmptyStruct>() { { SqlPort, default } };
         IDictionary<string, IList<PortBinding>> portBindingsDictionary = new Dictionary<string, IList<PortBinding>>()
             { { SqlPort, new List<PortBinding>() { new PortBinding() { HostPort = hostPort.ToString() } } } };
+        createContainerParameters.ExposedPorts = new Dictionary<string, EmptyStruct>() { { SqlPort, default } };
         createContainerParameters.HostConfig = new HostConfig() { PortBindings = portBindingsDictionary, PublishAllPorts = true };
+        return createContainerParameters;
     }
 
-    private async Task<Status> WaitTillReady(string containerId)
+    private static async Task<Status> WaitTillReady(IDockerClient dockerClient, string containerId, string connectionStringMaster)
     {
         //Wait until the container and sql server is ready
         var attempts = 0;
@@ -138,7 +102,7 @@ internal class SqlDockerHandler
                 try
                 {
                     //Check that we can connect to database
-                    using var connection = new SqlConnection(ConnectionString("master"));
+                    using var connection = new SqlConnection(connectionStringMaster);
                     connection.Open();
                     var command = connection.CreateCommand();
 

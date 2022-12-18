@@ -78,6 +78,8 @@ public static class DacHelper
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
     public static async Task<ITestDatabaseHelper> DropAndDeployDockerAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
     {
+        //Stop and remove container if already running
+        await SqlDockerHandler.StopAndRemoveContainerAsync($"DacHelper{databaseName}");
         var (status, container) = await SqlDockerHandler.RunDockerSqlContainerAsync($"DacHelper{databaseName}");
 
         if (!status.IsSuccess || container == null)

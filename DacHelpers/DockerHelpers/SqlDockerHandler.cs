@@ -1,9 +1,9 @@
 ﻿using Docker.DotNet;
 using Docker.DotNet.Models;
-using System.Net.Sockets;
-using System.Net;
-using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient;
+using System.Net;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
 
 namespace DacHelpers.DockerHelpers;
 
@@ -11,8 +11,9 @@ internal static class SqlDockerHandler
 {
     private const string containerImage = "mcr.microsoft.com/mssql/server";
     private const string SqlPort = "1433";
+    private const string SAPassword = "Pa$$word";
 
-    private static string ConnectionString(string databaseName, int hostPort) => $"Data Source=localhost,{hostPort};Initial Catalog={databaseName};User Id=sa;Password=Pa$$word;";
+    private static string ConnectionString(string databaseName, int hostPort) => $"Data Source=localhost,{hostPort};Initial Catalog={databaseName};User Id=sa;Password={SAPassword};TrustServerCertificate=True;";
 
     public static async Task<(Status, DockerContainer?)> RunDockerSqlContainerAsync(string containername, string containerImageTag = "2019-latest")
     {
@@ -34,7 +35,7 @@ internal static class SqlDockerHandler
 
         await dockerClient.Images.CreateImageAsync(imageParameters, new AuthConfig(), new Progress<JSONMessage>()).ConfigureAwait(false);
 
-        var createContainerParameters = ConfigPorts(containerName, containerImage, containerImageTag, hostPort);
+        var createContainerParameters = GetContainerParams(containerName, containerImage, containerImageTag, hostPort);
 
         var containerResponse = await dockerClient.Containers.CreateContainerAsync(createContainerParameters).ConfigureAwait(false);
 
@@ -58,12 +59,37 @@ internal static class SqlDockerHandler
         return (Status.Success(), dockerContainer);
     }
 
-    private static CreateContainerParameters ConfigPorts(string containerName, string containerImage, string containerImageTag, int hostPort)
+    public static async Task<Status> StopAndRemoveContainerAsync(string containerName)
+    {
+        using var dockerClient = CreateDockerClient();
+        try
+        {
+            var containers = await dockerClient.Containers.ListContainersAsync(new ContainersListParameters() { All = true, Limit = 1, Filters = new Dictionary<string, IDictionary<string, bool>> { { "name", new Dictionary<string, bool> { { containerName, true } } } } });
+            if (containers.Count == 0)
+            {
+                return Status.Success();
+            }
+            else
+            {
+                var containerId = containers[0].ID;
+                await dockerClient.Containers.StopContainerAsync(containerId, new ContainerStopParameters() { WaitBeforeKillSeconds = 2 });
+                await dockerClient.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters() { Force = true });
+                return Status.Success();
+            }
+        }
+        catch
+        {
+            return Status.Faillure("Failed to stop and remove container");
+        }
+    }
+
+    private static CreateContainerParameters GetContainerParams(string containerName, string containerImage, string containerImageTag, int hostPort)
     {
         var createContainerParameters = new CreateContainerParameters()
         {
             Name = containerName,
             Image = $"{containerImage}:{containerImageTag}",
+            Env = new List<string>() { "ACCEPT_EULA=Y", $"SA_PASSWORD={SAPassword}" },
         };
         //Map ports
         IDictionary<string, IList<PortBinding>> portBindingsDictionary = new Dictionary<string, IList<PortBinding>>()
@@ -80,8 +106,9 @@ internal static class SqlDockerHandler
         const int maxAttempts = 10;
         var containerReady = false;
         var sqlReady = false;
-        while (!containerReady && !sqlReady && attempts < maxAttempts)
+        while (!sqlReady && attempts < maxAttempts)
         {
+            await Task.Delay(1000);
             if (!containerReady)
             {
                 try
@@ -119,7 +146,6 @@ internal static class SqlDockerHandler
                 }
             }
             attempts++;
-            await Task.Delay(1000).ConfigureAwait(false);
         }
 
         if (!containerReady)

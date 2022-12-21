@@ -61,25 +61,23 @@ public static class DacHelper
     }
 
     /// <summary>
-    /// Creates a local docker container and deploys a dacpac there. Port and adress are chosen to simplify everything
+    /// Creates a local docker container and deploys a dacpac there
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
-    public static async Task<ITestDatabaseHelper> DropAndDeployDockerAsync(string dacpacPath, string databaseName)
+    public static async Task<ITestDatabaseHelper> DeployDockerAsync(string dacpacPath, string databaseName)
     {
-        return await DropAndDeployDockerAsync(dacpacPath, databaseName, new Dictionary<string, string>());
+        return await DeployDockerAsync(dacpacPath, databaseName, new Dictionary<string, string>());
     }
 
     /// <summary>
-    /// Creates a local docker container and deploys a dacpac there. Port and adress are chosen to simplify everything
+    /// Creates a local docker container and deploys a dacpac there
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
-    public static async Task<ITestDatabaseHelper> DropAndDeployDockerAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
+    public static async Task<ITestDatabaseHelper> DeployDockerAsync(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables)
     {
-        //Stop and remove container if already running
-        await SqlDockerHandler.StopAndRemoveContainerAsync($"DacHelper{databaseName}");
         var (status, container) = await SqlDockerHandler.RunDockerSqlContainerAsync($"DacHelper{databaseName}");
 
         if (!status.IsSuccess || container == null)

@@ -69,7 +69,7 @@ public class DacHelperTests
     public async Task ShouldDeployToDockerDatabase()
     {
         const string databaseName = "TestDb";
-        testDatabaseHelper = await DacHelper.DropAndDeployDockerAsync(dacpacPath: "TestDatabase.dacpac", databaseName);
+        testDatabaseHelper = await DacHelper.DeployDockerAsync(dacpacPath: "TestDatabase.dacpac", databaseName);
         var connectionString = testDatabaseHelper.ConnectionString;
 
         using var database = new Database(connectionString, "Microsoft.Data.SqlClient");

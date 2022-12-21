@@ -118,6 +118,62 @@ public static class DacHelper
         return new DockerTestDatabaseHelper(container, databaseName);
     }
 
+    /// <summary>
+    /// Deploys dacpac to existing server given a ConnectionString
+    /// </summary>
+    /// <param name="dacpacPath">Path to the DACPAC</param>
+    /// <param name="databaseName">Name of the database to deploy to</param>
+    /// <param name="connectionString">ConnectionString to the server. Must include </param>
+    public static async Task<ITestDatabaseHelper> DropAndDeployAsync(string dacpacPath, string databaseName, string connectionString)
+    {
+        return await DropAndDeployAsync(dacpacPath, databaseName, connectionString, new Dictionary<string, string>());
+    }
+
+    /// <summary>
+    /// Deploys dacpac to existing server given a ConnectionString
+    /// </summary>
+    /// <param name="dacpacPath">Path to the DACPAC</param>
+    /// <param name="databaseName">Name of the database to deploy to</param>
+    /// <param name="connectionString">ConnectionString to the server. Must include </param>
+    /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
+    public static async Task<ITestDatabaseHelper> DropAndDeployAsync(string dacpacPath, string databaseName, string connectionString, Dictionary<string, string> sqlCmdVariables)
+    {
+        await DropAndCreateDatabaseAsync(connectionString, databaseName);
+
+        var dacOptions = new DacDeployOptions
+        {
+            BlockOnPossibleDataLoss = false //This is for tests
+        };
+
+        foreach (var keyValuePair in sqlCmdVariables)
+        {
+            dacOptions.SqlCommandVariableValues.Add(keyValuePair);
+        }
+
+        var dacServiceInstance = new DacServices(connectionString);
+        //Could hook up here to dacServiceInstance.ProgressChanged and .Message to get progress updates but not sure where to log them
+        try
+        {
+            using DacPackage dacpac = DacPackage.Load(dacpacPath);
+            dacServiceInstance.Deploy(dacpac, databaseName
+                                    , upgradeExisting: true
+                                    , options: dacOptions
+                                    );
+        }
+        catch (Exception)
+        {
+            //How do we handle or log these?
+            throw;
+        }
+
+        //Create new connectionstring that points to the new database by setting InitialCatalog
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = databaseName
+        };
+        return new TestDatabaseHelper(builder.ConnectionString, databaseName);
+    }
+
     private static async Task DropAndCreateDatabaseAsync(string connectionString, string databaseName)
     {
         using var connection = new SqlConnection(connectionString);

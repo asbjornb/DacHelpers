@@ -12,7 +12,7 @@
     <RepositoryType>git</RepositoryType>
     <Description>A small library to ease deployment and use of dacpackages in integration testing against databases.</Description>
     <PackageTags>Sql; SqlServer; Database; DacFx; DacPac; Testing; IntegrationTesting; Deployment;</PackageTags>
-    <Version>0.0.2-alpha5</Version>
+    <Version>0.0.2-alpha6</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>

@@ -3,7 +3,7 @@ using PetaPoco;
 
 namespace DacHelpers.Test;
 
-[TestFixture]
+[TestFixture, Parallelizable(ParallelScope.Self)]
 public class LocalTestDatabaseHelperTests
 {
     private const string databaseName= "LocalTestDatabaseHelperTests";

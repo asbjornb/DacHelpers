@@ -11,7 +11,7 @@ var dacpacPath = "TestDb.dacpac";
 var databaseName = "TestDb";
 var testDatabaseHelper = await DacHelper.DropAndDeployLocalAsync(dacpacPath, databaseName);
 //Or
-var testDatabaseHelper = await DacHelper.DropAndDeployDockerAsync(dacpacPath, databaseName);
+var testDatabaseHelper = await DacHelper.DeployDockerAsync(dacpacPath, databaseName);
 ```
 
 The databaseTestHelper has a few helper functions to aid tests like supplying connectionstrings, resetting the database or cleaning up after use:
@@ -22,11 +22,24 @@ await testDatabaseHelper.ResetDatabaseAsync();
 await testDatabaseHelper.CleanUpAsync();
 ```
 
+If deploying to a docker container or server that already exist just supply a ConnectionString. Note though that the returned testDatabaseHelper can't be relied on then to dispose a container':
+
+```c#
+var connectionString = testDatabaseHelper.GetConnectionString();
+var testDatabaseHelper = await DacHelper.DeployAsync(dacpacPath, databaseName, connectionString);
+```
+
+Specifically for docker you can specify an image if you need to target a specific version of sql server:
+
+```c#
+var testDatabaseHelper = await DacHelper.DeployDockerAsync(dacpacPath, databaseName, "mcr.microsoft.com/mssql/server:2019-latest");
+```
+
 If using SqlCmd variables in the DacPac you can supply a dictionary with mappings:
 
 ```c#
 var variableMap = new Dictionary<string, string>() { { "Registration", "Registration" } }
-var testDatabaseHelper = DacHelper.DropAndDeployDockerAsync(dacpacPath, databaseName, variableMap);
+var testDatabaseHelper = DacHelper.DropAndDeployLocalAsync(dacpacPath, databaseName, variableMap);
 ```
 
 To deploy a list of changescripts instead of a DacPac locally:

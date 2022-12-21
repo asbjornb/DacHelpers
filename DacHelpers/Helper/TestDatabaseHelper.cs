@@ -1,16 +1,16 @@
 ﻿namespace DacHelpers.Helper;
 
 /// <summary>
-/// Small helper class for working with a deployed test-database on localhost
+/// Small helper class for working with a deployed test-database
 /// </summary>
-public class LocalTestDatabaseHelper : AbstractTestDatabaseHelper
+public class TestDatabaseHelper : AbstractTestDatabaseHelper
 {
     /// <summary>
-    /// Constructs a helper for working with localhost test-databases
+    /// Constructs a helper for working with test-databases
     /// </summary>
     /// <param name="connectionString">Connectionstring to the database</param>
     /// <param name="databaseName">Name of the database</param>
-    public LocalTestDatabaseHelper(string connectionString, string databaseName) : base(connectionString, databaseName)
+    public TestDatabaseHelper(string connectionString, string databaseName) : base(connectionString, databaseName)
     {
     }
 

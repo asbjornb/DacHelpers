@@ -4,9 +4,9 @@ using PetaPoco;
 namespace DacHelpers.Test;
 
 [TestFixture, Parallelizable(ParallelScope.Self)]
-public class LocalTestDatabaseHelperTests
+public class TestDatabaseHelperTests
 {
-    private const string databaseName= "LocalTestDatabaseHelperTests";
+    private const string databaseName= "TestDatabaseHelperTests";
     private ITestDatabaseHelper sut;
 
     [SetUp]
@@ -16,7 +16,7 @@ public class LocalTestDatabaseHelperTests
         var createDatabaseQuery = SqlQueryStrings.DropAndCreateDatabase(databaseName);
         using var masterDatabase = new Database("Data Source=localhost;Initial Catalog=master;Encrypt=False;Integrated Security=SSPI;", "Microsoft.Data.SqlClient");
         await masterDatabase.ExecuteAsync(createDatabaseQuery);
-        sut = new LocalTestDatabaseHelper($"Data Source=localhost;Initial Catalog={databaseName};Encrypt=False;Integrated Security=SSPI;", databaseName);
+        sut = new TestDatabaseHelper($"Data Source=localhost;Initial Catalog={databaseName};Encrypt=False;Integrated Security=SSPI;", databaseName);
     }
 
     [OneTimeTearDown]

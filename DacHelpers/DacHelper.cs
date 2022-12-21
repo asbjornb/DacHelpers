@@ -57,7 +57,7 @@ public static class DacHelper
             throw;
         }
 
-        return new LocalTestDatabaseHelper(GetConnectionStringLocal(databaseName), databaseName);
+        return new TestDatabaseHelper(GetConnectionStringLocal(databaseName), databaseName);
     }
 
     /// <summary>

@@ -26,7 +26,7 @@ If deploying to a docker container or server that already exist just supply a Co
 
 ```c#
 var connectionString = testDatabaseHelper.GetConnectionString();
-var testDatabaseHelper = await DacHelper.DeployAsync(dacpacPath, databaseName, connectionString);
+var testDatabaseHelper = await DacHelper.DropAndDeployAsync(dacpacPath, databaseName, connectionString);
 ```
 
 Specifically for docker you can specify an image if you need to target a specific version of sql server:

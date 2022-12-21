@@ -43,7 +43,7 @@ internal static class SqlDockerHandler
 
         if (!started)
         {
-            dockerClient.Dispose();
+            await DisposeContainerAndClientAsync(dockerClient, containerResponse.ID);
             return (Status.Faillure("Failed to start container"), null);
         }
 
@@ -51,7 +51,7 @@ internal static class SqlDockerHandler
 
         if (!ready.IsSuccess)
         {
-            dockerClient.Dispose();
+            await DisposeContainerAndClientAsync(dockerClient, containerResponse.ID);
             return (Status.Faillure("Failed to connect to SQL-database in container"), null);
         }
 
@@ -172,5 +172,15 @@ internal static class SqlDockerHandler
         var freePort = ((IPEndPoint)l.LocalEndpoint).Port;
         l.Stop();
         return freePort;
+    }
+
+    private static async Task DisposeContainerAndClientAsync(IDockerClient dockerClient, string containerId)
+    {
+        if (containerId != null)
+        {
+            await dockerClient.Containers.StopContainerAsync(containerId, new ContainerStopParameters() { WaitBeforeKillSeconds = 2 });
+            await dockerClient.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters() { Force = true });
+        }
+        dockerClient?.Dispose();
     }
 }

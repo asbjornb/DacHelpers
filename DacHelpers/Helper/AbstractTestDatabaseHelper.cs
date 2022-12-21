@@ -23,7 +23,11 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
     {
         ConnectionString = connectionString;
         DatabaseName = databaseName;
-        ConnectionStringMaster = ConnectionString.Replace($"Initial Catalog={DatabaseName};", "Initial Catalog=master;");
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = "master"
+        };
+        ConnectionStringMaster = builder.ConnectionString;
     }
 
     /// <summary>

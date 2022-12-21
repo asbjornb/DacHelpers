@@ -30,32 +30,7 @@ public static class DacHelper
     {
         var connectionStringMaster = GetConnectionStringLocal("master"); //Connect to master since database might not yet exist
         await DropAndCreateDatabaseAsync(connectionStringMaster, databaseName);
-
-        var dacOptions = new DacDeployOptions
-        {
-            BlockOnPossibleDataLoss = false //This is for tests
-        };
-
-        foreach (var keyValuePair in sqlCmdVariables)
-        {
-            dacOptions.SqlCommandVariableValues.Add(keyValuePair);
-        }
-
-        var dacServiceInstance = new DacServices(connectionStringMaster);
-        //Could hook up here to dacServiceInstance.ProgressChanged and .Message to get progress updates but not sure where to log them
-        try
-        {
-            using DacPackage dacpac = DacPackage.Load(dacpacPath);
-            dacServiceInstance.Deploy(dacpac, databaseName
-                                    , upgradeExisting: true
-                                    , options: dacOptions
-                                    );
-        }
-        catch (Exception)
-        {
-            //How do we handle or log these?
-            throw;
-        }
+        DeployDacpac(dacpacPath, databaseName, sqlCmdVariables, connectionStringMaster);
 
         return new TestDatabaseHelper(GetConnectionStringLocal(databaseName), databaseName);
     }
@@ -89,31 +64,7 @@ public static class DacHelper
 
         await DropAndCreateDatabaseAsync(connectionStringMaster, databaseName);
 
-        var dacOptions = new DacDeployOptions
-        {
-            BlockOnPossibleDataLoss = false //This is for tests
-        };
-
-        foreach (var keyValuePair in sqlCmdVariables)
-        {
-            dacOptions.SqlCommandVariableValues.Add(keyValuePair);
-        }
-
-        var dacServiceInstance = new DacServices(connectionStringMaster);
-        //Could hook up here to dacServiceInstance.ProgressChanged and .Message to get progress updates but not sure where to log them
-        try
-        {
-            using DacPackage dacpac = DacPackage.Load(dacpacPath);
-            dacServiceInstance.Deploy(dacpac, databaseName
-                                    , upgradeExisting: true
-                                    , options: dacOptions
-                                    );
-        }
-        catch (Exception)
-        {
-            //How do we handle or log these?
-            throw;
-        }
+        DeployDacpac(dacpacPath, databaseName, sqlCmdVariables, connectionStringMaster);
 
         return new DockerTestDatabaseHelper(container, databaseName);
     }
@@ -140,6 +91,18 @@ public static class DacHelper
     {
         await DropAndCreateDatabaseAsync(connectionString, databaseName);
 
+        DeployDacpac(dacpacPath, databaseName, sqlCmdVariables, connectionString);
+
+        //Create new connectionstring that points to the new database by setting InitialCatalog
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = databaseName
+        };
+        return new TestDatabaseHelper(builder.ConnectionString, databaseName);
+    }
+
+    private static void DeployDacpac(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables, string connectionStringServer)
+    {
         var dacOptions = new DacDeployOptions
         {
             BlockOnPossibleDataLoss = false //This is for tests
@@ -150,7 +113,7 @@ public static class DacHelper
             dacOptions.SqlCommandVariableValues.Add(keyValuePair);
         }
 
-        var dacServiceInstance = new DacServices(connectionString);
+        var dacServiceInstance = new DacServices(connectionStringServer);
         //Could hook up here to dacServiceInstance.ProgressChanged and .Message to get progress updates but not sure where to log them
         try
         {
@@ -165,13 +128,6 @@ public static class DacHelper
             //How do we handle or log these?
             throw;
         }
-
-        //Create new connectionstring that points to the new database by setting InitialCatalog
-        var builder = new SqlConnectionStringBuilder(connectionString)
-        {
-            InitialCatalog = databaseName
-        };
-        return new TestDatabaseHelper(builder.ConnectionString, databaseName);
     }
 
     private static async Task DropAndCreateDatabaseAsync(string connectionString, string databaseName)

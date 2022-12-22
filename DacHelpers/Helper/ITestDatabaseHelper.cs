@@ -16,14 +16,14 @@ public interface ITestDatabaseHelper
     public string DatabaseName { get; }
 
     /// <summary>
-    /// Reset all tables by disabling triggers and constraints, deleting and reenabling triggers and constraints - then reseeding identities at 0.
-    /// More specific resetting might require your own implementation.
+    /// Reset all tables by disabling triggers and constraints, deleting and reenabling triggers and constraints.
+    /// More specific resetting like reseeding identities or clearing history for temporal tables requires your own implementation.
     /// Note also that this can be slow - so for simple tests consider just manually resetting with TRUNCATE TABLE.
     /// </summary>
     public Task ResetDatabaseAsync();
 
     /// <summary>
-    /// Clean up after this database. For localhost just drop the database. For docker dispose of the container as well.
+    /// Clean up after this database. For docker dispose of the container. Else just drop the database.
     /// </summary>
     public Task CleanUpAsync();
 }

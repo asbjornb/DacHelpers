@@ -30,11 +30,7 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
         ConnectionStringMaster = builder.ConnectionString;
     }
 
-    /// <summary>
-    /// Reset all tables by disabling triggers and constraints, deleting and reenabling triggers and constraints.
-    /// More specific resetting like reseeding identities or clearing history for temporal tables requires your own implementation.
-    /// Note also that this can be slow - so for simple tests consider just manually resetting with TRUNCATE TABLE.
-    /// </summary>
+    ///<inheritdoc />
     public virtual async Task ResetDatabaseAsync()
     {
         //Using the undocumented sp_MSforeachtable with parameter @whereand
@@ -52,9 +48,7 @@ public abstract class AbstractTestDatabaseHelper : ITestDatabaseHelper
         await command.ExecuteNonQueryAsync();
     }
 
-    /// <summary>
-    /// Clean up after this database. For localhost just drop the database. For docker dispose of the container as well.
-    /// </summary>
+    ///<inheritdoc />
     public abstract Task CleanUpAsync();
 
     /// <summary>

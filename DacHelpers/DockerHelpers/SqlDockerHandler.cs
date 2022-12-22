@@ -21,9 +21,6 @@ internal static class SqlDockerHandler
         return await RunDockerSqlContainerAsync(containername, hostPort, containerImageTag);
     }
 
-    /// <summary>Builds and runs a docker container. Defaults to use 2019-latest tag but can be targetted to a specific version</summary>
-    /// <param name="containerImageTag">Tag used to select version of sql server</param>
-    /// <returns>Returns bool specifying if it was successful</returns>
     public static async Task<(Status,DockerContainer?)> RunDockerSqlContainerAsync(string containerName, int hostPort, string containerImageTag = "2019-latest")
     {
         var dockerClient = CreateDockerClient();

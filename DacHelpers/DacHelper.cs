@@ -74,7 +74,7 @@ public static class DacHelper
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
-    /// <param name="connectionString">ConnectionString to the server. Must include </param>
+    /// <param name="connectionString">ConnectionString to the server.</param>
     public static async Task<ITestDatabaseHelper> DropAndDeployAsync(string dacpacPath, string databaseName, string connectionString)
     {
         return await DropAndDeployAsync(dacpacPath, databaseName, connectionString, new Dictionary<string, string>());
@@ -85,7 +85,7 @@ public static class DacHelper
     /// </summary>
     /// <param name="dacpacPath">Path to the DACPAC</param>
     /// <param name="databaseName">Name of the database to deploy to</param>
-    /// <param name="connectionString">ConnectionString to the server. Must include </param>
+    /// <param name="connectionString">ConnectionString to the server.</param>
     /// <param name="sqlCmdVariables">SQLCMD variables to pass to the DACPAC</param>
     public static async Task<ITestDatabaseHelper> DropAndDeployAsync(string dacpacPath, string databaseName, string connectionString, Dictionary<string, string> sqlCmdVariables)
     {

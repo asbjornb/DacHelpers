@@ -100,7 +100,7 @@ internal static class SqlDockerHandler
     {
         //Wait until the container and sql server is ready
         var attempts = 0;
-        const int maxAttempts = 10;
+        const int maxAttempts = 30;
         var containerReady = false;
         var sqlReady = false;
         while (!sqlReady && attempts < maxAttempts)

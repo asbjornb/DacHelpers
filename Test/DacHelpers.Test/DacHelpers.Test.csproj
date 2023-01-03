@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="./../TestDatabase/Build/TestDatabase.dacpac">
+    <Content Include="./../TestDatabase/Build/TestDatabase.dacpac" Link="TestDatabase.dacpac">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="./../TestDatabase2/Build/TestDatabase2.dacpac">
+    <Content Include="./../TestDatabase2/Build/TestDatabase2.dacpac" Link="TestDatabase2.dacpac">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -30,6 +30,18 @@
     <ProjectReference Include="..\..\DacHelpers\DacHelpers.csproj" />
     <ProjectReference Include="..\TestDatabase2\TestDatabase2.sqlproj" />
     <ProjectReference Include="..\TestDatabase\TestDatabase.sqlproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="TestAssets\Changescripts\001AddInitialTable.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="TestAssets\Changescripts\002AddColumnToTable.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="TestAssets\Changescripts\SomeOldState\OldTable.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

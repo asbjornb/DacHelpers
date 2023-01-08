@@ -1,6 +1,6 @@
 # DacHelpers
 
-Wrapper for Microsoft.SqlServer.Dac and Docker.DotNet to simplify integration testing against databases with DacPacs.
+Wrapper for Microsoft.SqlServer.Dac and Docker.DotNet to simplify integration testing against databases with DacPacs. You can grab it at [nuget](https://www.nuget.org/packages/DacHelpers/).
 
 ## Usage
 
@@ -60,6 +60,8 @@ await DacHelper.DeployChangescriptsLocalAsync(databaseName, folder);
 Testing that a list of changescripts match a DacPac is as simple as:
 
 ```c#
-var changes = await DacHelper.CompareLocalAsync(dacpacPath, changescriptFolder);
-Assert.That(changes, Has.Count.EqualTo(0));
+var deployReport = await DacHelper.CompareLocalAsync(dacpacPath, changescriptFolder);
+Assert.That(deployReport.Operations, Has.Count.EqualTo(0));
 ```
+
+For more usage also check out the projects tests at [github](https://github.com/asbjornb/DacHelpers).

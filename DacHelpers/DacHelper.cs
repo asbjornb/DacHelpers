@@ -1,4 +1,5 @@
-﻿using DacHelpers.DockerHelpers;
+﻿using DacHelpers.DeployReporting;
+using DacHelpers.DockerHelpers;
 using DacHelpers.Helper;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
@@ -174,6 +175,46 @@ public static class DacHelper
     {
         var changeScripts = EnumerateSqlFiles(changeScriptFolder);
         await DropAndDeployChangeScriptsLocalAsync(databaseName, changeScripts);
+    }
+
+    /// <summary>
+    /// Deploys a database on localhost from changescripts and then compares the dacpac with it and lists out the differences.
+    /// Used to verify that the changescripts are correct i.e. that they produce the same state as the dacpac.
+    /// </summary>
+    /// <param name="changescriptFolder">Folder with changescripts to apply</param>
+    /// <param name="dacpacPath">Path to the dacpac to compare with</param>
+    /// <returns>List of differences between the dacpac and the changescripts</returns>
+    public static async Task<DeployReport> CompareLocalAsync(string changescriptFolder, string dacpacPath)
+    {
+        var databaseName = $"DacHelperTest{Guid.NewGuid().ToString()[..7]}";
+        var connectionString = GetConnectionStringLocal(databaseName);
+        try
+        {
+            await DropAndDeployChangeScriptsLocalAsync(databaseName, changescriptFolder);
+
+            var dacpac = DacPackage.Load(dacpacPath);
+            var dacServices = new DacServices(connectionString);
+
+            var deployOptions = new DacDeployOptions()
+            {
+                DropObjectsNotInSource = true,
+                IgnorePermissions = true,
+                IgnoreRoleMembership = true
+            };
+
+            var differences = dacServices.GenerateDeployReport(dacpac, databaseName, deployOptions);
+
+            return DeployReport.Parse(differences);
+        }
+        finally
+        {
+            using var connection = new SqlConnection(connectionString);
+            connection.Open();
+            var command = connection.CreateCommand();
+
+            command.CommandText = SqlQueryStrings.DropDatabaseSql(databaseName);
+            await command.ExecuteNonQueryAsync();
+        }
     }
 
     private static void DeployDacpac(string dacpacPath, string databaseName, Dictionary<string, string> sqlCmdVariables, string connectionStringServer)
